@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Goal Getter Journal</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+  <!-- Google Fonts 추가 -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+    }
+    .btn-custom {
+      background-color: #007bff;
+      color: white;
+      border: none;
+    }
+    .btn-custom:hover {
+      background-color: #0056b3;
+    }
+    .icon-btn {
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 24px;
+    }
+    .icon-btn i.fa-bell {
+      color: rgb(248, 53, 53);
+    }
+    .date-achieved {
+      background-color: #d4edda;
+    }
+    .weekly-achieved {
+      background-color: #ffc0cb;
+      animation: heartBeat 1s infinite;
+    }
+    @keyframes heartBeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+    .heart-animation {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 48px;
+      color: pink;
+      animation: floatUp 2s ease-in-out infinite;
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-50px); }
+    }
+    @media (max-width: 768px) {
+      .container {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="text-center mb-4">Plan Do See</h2>
+    <div class="form-row align-items-center mb-3">
+      <div class="form-group col-auto">
+        <label for="datePicker">Date</label>
+        <input type="date" id="datePicker" class="form-control short-date" />
+      </div>
+      <div class="form-group col">
+        <label for="weeklyGoal">Weekly Goal</label>
+        <textarea id="weeklyGoal" class="form-control" placeholder="Enter your weekly goal"></textarea>
+      </div>
+      <div class="col-auto">
+        <button id="saveWeeklyGoalButton" class="icon-btn" title="Save Goal"><i class="fas fa-save"></i></button>
+        <button id="weeklyGoalBell" class="icon-btn" title="Goal Achieved Bell"><i class="fas fa-bell"></i></button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group col-md-6">
+        <label for="planInput">Plan</label>
+        <textarea id="planInput" class="form-control" placeholder="Today's plan"></textarea>
+      </div>
+      <div class="form-group col-md-6">
+        <label for="doInput">Do</label>
+        <textarea id="doInput" class="form-control" placeholder="What you did today"></textarea>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="seeInput">See</label>
+      <textarea id="seeInput" class="form-control" placeholder="Today's evaluation"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="researchInput">Research Notes</label>
+      <textarea id="researchInput" class="form-control" placeholder="Today's research and observations"></textarea>
+    </div>
+    <div class="text-center">
+      <button id="saveButton" class="btn btn-custom mb-2"><i class="fas fa-save"></i> Save</button>
+      <button id="loadButton" class="btn btn-secondary mb-2"><i class="fas fa-folder-open"></i> Load</button>
+      <button id="deleteButton" class="btn btn-danger mb-2"><i class="fas fa-trash-alt"></i> Delete</button>
+    </div>
+    <div class="text-center mt-3">
+      <button id="dailyGoalBell" class="icon-btn" title="Daily Goal Achieved Bell"><i class="fas fa-bell"></i></button>
+    </div>
+    <div id="output" class="mt-3"></div>
+    <div id="heartAnimation" class="heart-animation d-none"><i class="fas fa-heart"></i></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', init);
+
+    function init() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('datePicker').value = today;
+      loadWeeklyGoal();
+      updateDateColors();
+      addEventListeners();
+    }
+
+    function addEventListeners() {
+      document.getElementById('saveButton').addEventListener('click', saveData);
+      document.getElementById('loadButton').addEventListener('click', loadData);
+      document.getElementById('deleteButton').addEventListener('click', deleteData);
+      document.getElementById('saveWeeklyGoalButton').addEventListener('click', saveWeeklyGoal);
+      document.getElementById('weeklyGoalBell').addEventListener('click', markWeeklyGoalAchieved);
+      document.getElementById('dailyGoalBell').addEventListener('click', markDailyGoalAchieved);
+    }
+
+    function getWeekKey() {
+      const currentDate = new Date();
+      const year = currentDate.getFullYear();
+      const weekNumber = Math.ceil((currentDate.getDate() + 6 - currentDate.getDay()) / 7);
+      return `${year}-week-${weekNumber}`;
+    }
+
+    function saveWeeklyGoal() {
+      const weeklyGoal = document.getElementById('weeklyGoal').value;
+      const weekKey = getWeekKey();
+      localStorage.setItem(weekKey, weeklyGoal);
+      showAlert('Weekly goal saved!', 'success');
+    }
+
+    function loadWeeklyGoal() {
+      const weekKey = getWeekKey();
+      const savedGoal = localStorage.getItem(weekKey);
+      if (savedGoal) {
+        document.getElementById('weeklyGoal').value = savedGoal;
+      }
+    }
+
+    function markWeeklyGoalAchieved() {
+      if (checkAllDaysAchieved()) {
+        document.querySelector('.container').classList.add('weekly-achieved');
+        showHeartAnimation();
+        showAlert('You have achieved all your weekly goals! 🔔', 'success');
+      } else {
+        showAlert('You need to achieve all daily goals first.', 'warning');
+      }
+    }
+
+    function markDailyGoalAchieved() {
+      const date = document.getElementById('datePicker').value;
+      localStorage.setItem(`${date}-achieved`, 'true');
+      updateDateColors();
+      showAlert('Daily goal achieved! 🔔', 'success');
+    }
+
+    function updateDateColors() {
+      const date = document.getElementById('datePicker').value;
+      if (localStorage.getItem(`${date}-achieved`)) {
+        document.getElementById('datePicker').classList.add('date-achieved');
+      }
+    }
+
+    function checkAllDaysAchieved() {
+      const currentDate = new Date();
+      const year = currentDate.getFullYear();
+      const weekNumber = Math.ceil((currentDate.getDate() + 6 - currentDate.getDay()) / 7);
+
+      for (let day = 1; day <= 7; day++) {
+        const date = new Date(year, currentDate.getMonth(), currentDate.getDate() - currentDate.getDay() + day).toISOString().split('T')[0];
+        if (!localStorage.getItem(`${date}-achieved`)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function showHeartAnimation() {
+      const heart = document.getElementById('heartAnimation');
+      heart.classList.remove('d-none');
+      setTimeout(() => heart.classList.add('d-none'), 2000);
+    }
+
+    function saveData() {
+      const date = document.getElementById('datePicker').value;
+      const data = {
+        plan: document.getElementById('planInput').value,
+        doText: document.getElementById('doInput').value,
+        see: document.getElementById('seeInput').value,
+        research: document.getElementById('researchInput').value
+      };
+      localStorage.setItem(date, JSON.stringify(data));
+      showAlert('Data saved!', 'success');
+    }
+
+    function loadData() {
+      const date = document.getElementById('datePicker').value;
+      const savedData = localStorage.getItem(date);
+      if (savedData) {
+        const data = JSON.parse(savedData);
+        document.getElementById('planInput').value = data.plan;
+        document.getElementById('doInput').value = data.doText;
+        document.getElementById('seeInput').value = data.see;
+        document.getElementById('researchInput').value = data.research;
+        showAlert(`Data loaded for ${date}.`, 'success');
+      } else {
+        showAlert('No data saved for this date.', 'warning');
+      }
+    }
+
+    function deleteData() {
+      const date = document.getElementById('datePicker').value;
+      if (localStorage.getItem(date)) {
+        localStorage.removeItem(date);
+        clearInputs();
+        showAlert('Data deleted!', 'success');
+      } else {
+        showAlert('No data to delete.', 'warning');
+      }
+    }
+
+    function clearInputs() {
+      document.getElementById('planInput').value = '';
+      document.getElementById('doInput').value = '';
+      document.getElementById('seeInput').value = '';
+      document.getElementById('researchInput').value = '';
+      document.getElementById('output').innerHTML = '';
+    }
+
+    function showAlert(message, type) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert alert-${type}`;
+      alertDiv.textContent = message;
+      document.querySelector('.container').prepend(alertDiv);
+      setTimeout(() => alertDiv.remove(), 3000);
+    }
+  </script>
+</body>
+</html>
