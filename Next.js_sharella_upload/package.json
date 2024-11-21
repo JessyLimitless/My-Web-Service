@@ -1,0 +1,31 @@
+{
+  "name": "nextjs-sharella",
+  "version": "1.0.0",
+  "description": "Umbrella rental system built with Next.js, MongoDB, and Node.js",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "mongodb": "^5.5.0",
+    "next": "^13.4.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "eslint": "latest",
+    "eslint-config-next": "latest"
+  },
+  "keywords": [
+    "nextjs",
+    "mongodb",
+    "umbrella",
+    "rental",
+    "system"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
