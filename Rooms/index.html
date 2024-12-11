@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>회의실 예약 시스템</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+
+  <!-- 헤더 -->
+  <header class="bg-teal-600 text-white py-6">
+    <h1 class="text-center text-4xl font-bold">회의실 예약 시스템</h1>
+  </header>
+
+  <!-- 예약 폼 -->
+  <section class="p-8 flex justify-center">
+    <div class="w-full max-w-4xl">
+      <h2 class="text-2xl font-semibold mb-6 text-gray-800">📅 회의실 예약하기</h2>
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">예약자 명</label>
+          <input id="reserver-name" type="text" placeholder="이름을 입력하세요" class="mt-2 p-3 block w-full rounded-md border-gray-300 shadow-md focus:border-teal-500 focus:ring focus:ring-teal-300">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">예약 날짜</label>
+          <input id="reservation-date" type="date" class="mt-2 p-3 block w-full rounded-md border-gray-300 shadow-md focus:border-teal-500 focus:ring focus:ring-teal-300">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">시간 선택</label>
+          <select id="reservation-time" class="mt-2 p-3 block w-full rounded-md border-gray-300 shadow-md focus:border-teal-500 focus:ring focus:ring-teal-300"></select>
+        </div>
+      </div>
+      <button id="reserve-btn" class="mt-8 bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-md transition-all duration-200">
+        예약하기
+      </button>
+    </div>
+  </section>
+
+  <!-- 예약 스케줄 표시 -->
+  <section class="p-8 flex justify-center">
+    <div class="w-full max-w-5xl">
+      <h2 class="text-2xl font-semibold mb-6 text-gray-800">📋 회의실 예약 스케줄</h2>
+      <div class="overflow-x-auto">
+        <table class="table-auto w-full text-center border border-collapse border-gray-300">
+          <thead>
+            <tr class="bg-teal-600 text-white">
+              <th class="py-3 px-2 w-[10%]">시간</th> 
+              <th class="w-[18%]">월</th> 
+              <th class="w-[18%]">화</th> 
+              <th class="w-[18%]">수</th> 
+              <th class="w-[18%]">목</th> 
+              <th class="w-[18%]">금</th> 
+            </tr>
+          </thead>
+          <tbody id="schedule-table-body" class="bg-white">
+            <!-- 동적 스케줄 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const timeSlots = Array.from({ length: 10 }, (_, i) => `${i + 9}:00 - ${i + 10}:00`);
+    const days = ['월', '화', '수', '목', '금'];
+
+    const nameInput = document.getElementById('reserver-name');
+    const dateInput = document.getElementById('reservation-date');
+    const timeInput = document.getElementById('reservation-time');
+    const reserveBtn = document.getElementById('reserve-btn');
+    const scheduleTableBody = document.getElementById('schedule-table-body');
+
+    timeSlots.forEach(time => {
+      const option = document.createElement('option');
+      option.value = time;
+      option.textContent = time;
+      timeInput.appendChild(option);
+    });
+
+    async function loadReservations() {
+      const response = await fetch('/reservations');
+      const data = await response.json();
+      return data;
+    }
+
+    async function renderSchedule() {
+      scheduleTableBody.innerHTML = '';
+      const reservations = await loadReservations();
+
+      timeSlots.forEach(timeSlot => {
+        const row = document.createElement('tr');
+        
+        // Time slot column with 10% width
+        row.innerHTML = `<td class="py-3 px-2 border w-[10%]">${timeSlot}</td>`;
+        
+        days.forEach(day => {
+          const cell = document.createElement('td');
+          cell.classList.add('w-[18%]', 'border'); // 18% width for weekday columns
+          const reservation = reservations.find(res => res.day === day && res.time === timeSlot);
+          if (reservation) {
+            cell.innerHTML = `
+              <div class="flex justify-center items-center">
+                <span class="mr-2">${reservation.name}</span>
+                <button class="text-sm text-blue-600 underline" onclick="editReservation('${reservation._id}')">수정</button>
+                <button class="text-sm text-red-600 underline ml-2" onclick="deleteReservation('${reservation._id}')">삭제</button>
+              </div>
+            `;
+          }
+          row.appendChild(cell);
+        });
+
+        scheduleTableBody.appendChild(row);
+      });
+    }
+
+    async function addReservation(name, date, time) {
+      const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][new Date(date).getDay()];
+
+      if (!days.includes(dayOfWeek)) {
+        alert('예약은 월요일부터 금요일까지만 가능합니다.');
+        return;
+      }
+
+      const response = await fetch('/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, date, day: dayOfWeek, time })
+      });
+
+      if (response.ok) {
+        renderSchedule();
+      } else {
+        alert('이미 예약된 시간입니다.');
+      }
+    }
+
+    async function deleteReservation(id) {
+      if (confirm('이 예약을 삭제하시겠습니까?')) {
+        await fetch(`/reservations/${id}`, { method: 'DELETE' });
+        renderSchedule();
+      }
+    }
+
+    async function editReservation(id) {
+      const newName = prompt('새 예약자 이름을 입력하세요:');
+      if (newName) {
+        await fetch(`/reservations/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName })
+        });
+        renderSchedule();
+      }
+    }
+
+    reserveBtn.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      const date = dateInput.value;
+      const time = timeInput.value;
+
+      if (!name || !date || !time) {
+        alert('모든 필드를 입력해주세요.');
+        return;
+      }
+
+      addReservation(name, date, time);
+    });
+
+    document.addEventListener('DOMContentLoaded', renderSchedule);
+  </script>
+
+</body>
+</html>

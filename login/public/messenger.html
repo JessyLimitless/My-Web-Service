@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messenger</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f3f4f6;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .welcome-container {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            animation: slide-in 1s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #333;
+            animation: fade-in 1.2s ease-in;
+        }
+
+        p {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #555;
+            animation: fade-in 1.5s ease-in;
+        }
+
+        .logout-button {
+            margin-top: 30px;
+            padding: 15px 20px;
+            background-color: #4CAF50;
+            color: #fff;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .logout-button:hover {
+            background-color: #45a049;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slide-in {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="welcome-container">
+    <h1>Welcome to the Messenger</h1>
+    <p>You have successfully logged in!</p>
+    <a href="/logout"><button class="logout-button">Logout</button></a>
+</div>
+
+</body>
+</html>
